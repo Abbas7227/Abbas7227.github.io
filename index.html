@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FF2 PlayMaker</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+      color: #fff;
+      padding: 40px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: rgba(0, 0, 0, 0.7);
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 0 15px rgba(0, 255, 204, 0.4);
+    }
+    h1 {
+      text-align: center;
+      color: #00ffcc;
+    }
+    label {
+      margin-top: 15px;
+      display: block;
+      font-weight: bold;
+    }
+    select, input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      margin-top: 5px;
+    }
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 12px;
+      border: none;
+      background-color: #00ffcc;
+      color: #000;
+      font-size: 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background-color: #00ccb3;
+    }
+    #output {
+      margin-top: 25px;
+      font-size: 18px;
+      color: #00ffcc;
+      background-color: #222;
+      padding: 15px;
+      border-radius: 10px;
+    }
+    ul {
+      padding-left: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>FF2 PlayMaker</h1>
+    <label for="yard">Current Yard Line (0-100):</label>
+    <input type="number" id="yard" min="0" max="100" />
+
+    <label for="down">Down:</label>
+    <select id="down">
+      <option value="1st">1st</option>
+      <option value="2nd">2nd</option>
+      <option value="3rd">3rd</option>
+      <option value="4th">4th</option>
+    </select>
+
+    <label for="gain">Yards You're Going For:</label>
+    <select id="gain">
+      <option value="short">Short (0-30 yards)</option>
+      <option value="medium">Medium (30-60 yards)</option>
+      <option value="long">Long (60-90 yards)</option>
+    </select>
+
+    <button onclick="recommendPlay()">Get Recommended Plays</button>
+
+    <div id="output"></div>
+  </div>
+
+  <script>
+    // Define all available plays and rules
+    const rules = [
+      {
+        play: "Vertical Drag Short Cross",
+        cond: (yard, down, gain) => yard > 40 && (down === "1st" || down === "2nd") && (gain === "medium" || gain === "long")
+      },
+      {
+        play: "Double Drag Streaks",
+        cond: (yard, down, gain) => (yard < 30 || yard > 70) && down === "2nd" && gain === "long"
+      },
+      {
+        play: "PA Outs",
+        cond: (yard, down, gain) => yard > 10 && (down === "2nd" || down === "3rd" || down === "4th") && (gain === "short" || gain === "medium")
+      },
+      {
+        play: "Smash Concept",
+        cond: (yard, down, gain) => yard >= 0 && yard <= 40 && (down === "1st" || down === "2nd") && gain === "short"
+      },
+      {
+        play: "Four Verticals",
+        cond: (yard, down, gain) => yard >= 20 && yard <= 80 && (down === "2nd" || down === "1st") && gain === "long"
+      },
+      {
+        play: "Mesh Shallow",
+        cond: (yard, down, gain) => yard >= 20 && yard <= 60 && (down === "2nd" || down === "3rd") && gain === "short"
+      },
+      {
+        play: "Drive Concept",
+        cond: (yard, down, gain) => yard >= 15 && yard <= 70 && (down === "1st" || down === "2nd") && gain === "medium"
+      },
+      {
+        play: "PA Boot Drag",
+        cond: (yard, down, gain) => yard >= 10 && yard <= 50 && down === "1st" && gain === "medium"
+      },
+      {
+        play: "Double Slants",
+        cond: (yard, down, gain) => yard >= 0 && yard <= 30 && (down === "3rd" || down === "4th") && gain === "short"
+      },
+      {
+        play: "Stick Concept",
+        cond: (yard, down, gain) => yard >= 0 && yard <= 30 && down === "3rd" && gain === "short"
+      },
+      {
+        play: "Flood Post",
+        cond: (yard, down, gain) => yard >= 30 && yard <= 80 && down === "2nd" && gain === "long"
+      },
+      {
+        play: "Texas Concept",
+        cond: (yard, down, gain) => yard >= 10 && yard <= 40 && (down === "2nd" || down === "3rd") && gain === "short"
+      },
+      {
+        play: "Levels Concept",
+        cond: (yard, down, gain) => yard >= 20 && yard <= 60 && (down === "2nd" || down === "3rd") && gain === "short"
+      },
+      {
+        play: "Corner Post",
+        cond: (yard, down, gain) => yard >= 30 && yard <= 70 && (down === "3rd" || down === "4th") && gain === "medium"
+      },
+      {
+        play: "Deep Crossers",
+        cond: (yard, down, gain) => yard >= 40 && yard <= 80 && (down === "3rd" || down === "4th") && gain === "long"
+      },
+      {
+        play: "Dagger Concept",
+        cond: (yard, down, gain) => yard >= 25 && yard <= 60 && (down === "3rd" || down === "4th") && gain === "medium"
+      },
+      {
+        play: "Scissors",
+        cond: (yard, down, gain) => yard >= 30 && yard <= 60 && down === "3rd" && gain === "medium"
+      },
+      {
+        play: "Yankee Concept",
+        cond: (yard, down, gain) => yard >= 50 && yard <= 80 && (down === "3rd" || down === "4th") && gain === "long"
+      },
+      {
+        play: "Slot Cross",
+        cond: (yard, down, gain) => yard >= 20 && yard <= 50 && down === "3rd" && gain === "medium"
+      },
+      {
+        play: "Corner Flood",
+        cond: (yard, down, gain) => yard >= 40 && yard <= 70 && down === "3rd" && gain === "long"
+      },
+      {
+        play: "Dagger Pivot",
+        cond: (yard, down, gain) => yard >= 25 && yard <= 50 && down === "3rd" && gain === "medium"
+      },
+      {
+        play: "Deep Out Wheel",
+        cond: (yard, down, gain) => yard >= 30 && yard <= 70 && down === "4th" && gain === "long"
+      },
+      {
+        play: "Bunch Flood",
+        cond: (yard, down, gain) => yard >= 30 && yard <= 60 && down === "3rd" && gain === "medium"
+      },
+      {
+        play: "Backside Post Cross",
+        cond: (yard, down, gain) => yard >= 40 && yard <= 80 && down === "4th" && gain === "long"
+      },
+      {
+        play: "Switch Verticals",
+        cond: (yard, down, gain) => yard === 100 && down === "3rd" && (gain === "medium" || gain === "long")
+      },
+      {
+        play: "Post Wheel",
+        cond: (yard, down, gain) => yard <= 10 && down === "1st" && gain === "long"
+      },
+      {
+        play: "Levels Backed Up",
+        cond: (yard, down, gain) => yard <= 10 && down === "4th" && gain === "medium"
+      },
+      {
+        play: "Flood Switch",
+        cond: (yard, down, gain) => yard >= 20 && yard <= 30 && down === "4th" && gain === "long"
+      },
+      {
+        play: "PA Deep Cross",
+        cond: (yard, down, gain) => yard >= 15 && yard <= 30 && down === "1st" && gain === "long"
+      },
+      {
+        play: "Double Post",
+        cond: (yard, down, gain) => yard >= 10 && yard <= 25 && down === "4th" && gain === "long"
+      },
+      {
+        play: "Curl Flat",
+        cond: (yard, down, gain) => yard >= 5 && yard <= 15 && down === "2nd" && gain === "medium"
+      },
+      {
+        play: "Snag Concept",
+        cond: (yard, down, gain) => yard <= 10 && down === "3rd" && gain === "medium"
+      },
+      {
+        play: "Slot Fade",
+        cond: (yard, down, gain) => yard >= 85 && down === "4th" && gain === "medium"
+      },
+      {
+        play: "Angle Route",
+        cond: (yard, down, gain) => yard <= 10 && down === "2nd" && gain === "medium"
+      },
+      {
+        play: "Stick Nod",
+        cond: (yard, down, gain) => yard >= 90 && down === "3rd" && gain === "medium"
+      },
+      {
+        play: "Quick Outs",
+        cond: (yard, down, gain) => yard >= 70 && yard <= 80 && down === "1st" && gain === "short"
+      },
+      {
+        play: "China Concept",
+        cond: (yard, down, gain) => yard <= 5 && down === "2nd" && gain === "medium"
+      },
+      {
+        play: "Four Verts Backed Up",
+        cond: (yard, down, gain) => yard <= 5 && down === "1st" && gain === "long"
+      },
+      {
+        play: "Out and Up",
+        cond: (yard, down, gain) => yard <= 10 && down === "4th" && gain === "medium"
+      },
+      {
+        play: "Cross Wheel Combo",
+        cond: (yard, down, gain) => yard >= 40 && yard <= 60 && (down === "1st" || down === "2nd") && gain === "medium"
+      },
+      {
+        play: "Black Out Route",
+        cond: (yard, down, gain) => (down === "2nd" || down === "3rd" || down === "4th") && gain === "short"
+      },
+    ];
+
+    // Make recommendPlay globally accessible
+    window.recommendPlay = function() {
+      const yard = parseInt(document.getElementById('yard').value);
+      const down = document.getElementById('down').value;
+      const gain = document.getElementById('gain').value;
+      const output = document.getElementById('output');
+
+      // Input validation
+      if (isNaN(yard) || yard < 0 || yard > 100) {
+        output.textContent = "Please enter a valid yard line between 0 and 100.";
+        return;
+      }
+
+      const matches = rules.filter(rule => rule.cond(yard, down, gain));
+
+      if (matches.length > 0) {
+        output.innerHTML = `<strong>Recommended Plays:</strong><ul>` + matches.map(m => `<li>${m.play}</li>`).join('') + `</ul>`;
+      } else {
+        output.textContent = "No recommended play found for the given conditions.";
+      }
+    }
+  </script>
+</body>
+</html>
