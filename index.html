@@ -251,10 +251,15 @@
       {
         play: "Cross Wheel Combo",
         cond: (yard, down, gain) => yard >= 40 && yard <= 60 && (down === "1st" || down === "2nd") && gain === "medium"
-      }
+      },
+      {
+        play: "Black Out Route",
+        cond: (yard, down, gain) => (down === "2nd" || down === "3rd" || down === "4th") && gain === "short"
+      },
     ];
 
-    function recommendPlay() {
+    // Make recommendPlay globally accessible
+    window.recommendPlay = function() {
       const yard = parseInt(document.getElementById('yard').value);
       const down = document.getElementById('down').value;
       const gain = document.getElementById('gain').value;
